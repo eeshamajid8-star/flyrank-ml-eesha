@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Content Refresh Opportunity Scoring — FlyRank ML Capstone</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    :root{--bg:#0A0E17;--surface:#111827;--border:#1E2D45;--text:#E8EDF5;--muted:#6B7A99;--accent:#00C2FF;--white:#F0F4FF;}
+    html{scroll-behavior:smooth;}
+    body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;line-height:1.7;}
+
+    nav{position:sticky;top:0;z-index:100;background:rgba(10,14,23,0.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:16px 60px;display:flex;justify-content:space-between;align-items:center;}
+    .nav-logo{font-weight:700;font-size:18px;color:var(--white);}
+    .nav-logo span{color:var(--accent);}
+    .nav-links a{color:var(--muted);text-decoration:none;font-size:13px;margin-left:24px;}
+    .nav-links a:hover{color:var(--accent);}
+
+    .hero{padding:100px 60px 80px;max-width:900px;margin:0 auto;text-align:center;}
+    .hero-tag{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:.2em;text-transform:uppercase;margin-bottom:20px;}
+    .hero h1{font-size:44px;font-weight:700;color:var(--white);line-height:1.15;letter-spacing:-.02em;margin-bottom:24px;}
+    .hero h1 span{color:var(--accent);}
+    .meta{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);margin-bottom:40px;}
+
+    .abstract{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:12px;padding:32px;max-width:800px;margin:0 auto 80px;}
+    .abstract-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:.2em;text-transform:uppercase;margin-bottom:12px;}
+    .abstract p{font-size:15px;color:var(--muted);line-height:1.8;}
+
+    .section{padding:60px;max-width:900px;margin:0 auto;border-top:1px solid var(--border);}
+    .section-num{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:.2em;text-transform:uppercase;margin-bottom:12px;}
+    .section h2{font-size:28px;font-weight:700;color:var(--white);margin-bottom:24px;letter-spacing:-.02em;}
+    .section p{font-size:15px;color:var(--muted);line-height:1.8;margin-bottom:16px;}
+
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;}
+    .card h4{font-size:15px;font-weight:600;color:var(--white);margin-bottom:8px;}
+    .card p{font-size:14px;color:var(--muted);}
+
+    table{width:100%;border-collapse:collapse;margin:24px 0;}
+    th{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;padding:12px 16px;border-bottom:2px solid var(--border);text-align:left;}
+    td{padding:12px 16px;border-bottom:1px solid var(--border);font-size:14px;color:var(--muted);}
+    tr:hover td{background:rgba(0,194,255,.03);}
+    .highlight{color:var(--accent);font-weight:600;}
+
+    .metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:24px 0;}
+    .metric-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;text-align:center;}
+    .metric-num{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;color:var(--accent);}
+    .metric-label{font-size:12px;color:var(--muted);margin-top:6px;}
+    .metric-delta{font-size:11px;color:#27AE60;margin-top:4px;}
+
+    .action-badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 10px;border-radius:4px;text-transform:uppercase;letter-spacing:.1em;}
+    .refresh-now{background:rgba(231,76,60,.15);color:#E74C3C;border:1px solid rgba(231,76,60,.3);}
+    .review-soon{background:rgba(243,156,18,.15);color:#F39C12;border:1px solid rgba(243,156,18,.3);}
+    .monitor{background:rgba(107,122,153,.15);color:var(--muted);border:1px solid var(--border);}
+
+    .chart-placeholder{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:40px;text-align:center;margin:24px 0;}
+    .chart-placeholder p{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);}
+
+    .limitation-list{list-style:none;margin:16px 0;}
+    .limitation-list li{padding:12px 0;border-bottom:1px solid var(--border);font-size:14px;color:var(--muted);display:flex;gap:12px;}
+    .limitation-list li::before{content:'⚠';color:var(--accent);flex-shrink:0;}
+
+    .playbook-row{display:grid;grid-template-columns:140px 1fr 1fr;gap:16px;padding:16px 0;border-bottom:1px solid var(--border);align-items:start;}
+    .playbook-row:last-child{border-bottom:none;}
+
+    footer{text-align:center;padding:60px;border-top:1px solid var(--border);}
+    footer p{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);line-height:2;}
+    footer a{color:var(--accent);text-decoration:none;}
+
+    @media(max-width:768px){
+      nav{padding:16px 24px;}
+      .hero{padding:60px 24px 40px;}
+      .hero h1{font-size:28px;}
+      .section{padding:40px 24px;}
+      .metric-grid{grid-template-columns:repeat(2,1fr);}
+      .playbook-row{grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">E<span>M</span> · ML Capstone</div>
+  <div class="nav-links">
+    <a href="#abstract">Abstract</a>
+    <a href="#data">Data</a>
+    <a href="#methodology">Method</a>
+    <a href="#results">Results</a>
+    <a href="#recommendations">Recommendations</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">FlyRank ML Internship · Capstone Research Paper</div>
+  <h1>Content Refresh Opportunity Scoring:<br><span>A Data-Driven Priority Engine</span></h1>
+  <div class="meta">Eesha Majid &nbsp;·&nbsp; eeshamajid8@gmail.com &nbsp;·&nbsp; October 2026 &nbsp;·&nbsp; General AI Fluency + Machine Learning Track</div>
+</div>
+
+<!-- ABSTRACT -->
+<div class="abstract" id="abstract">
+  <div class="abstract-label">Abstract</div>
+  <p>Content editors managing large websites face a prioritization problem: they cannot refresh all pages, so they need a data-driven ranked list. This paper asks: which content pages are most worth refreshing based on their current search performance signals? Using 30,000 anonymized content pages from the FlyRank ML Internship dataset, we build and validate a Random Forest classifier that predicts declining pages and ranks them by refresh priority. Our model achieves Precision@20 of 0.950 compared to 0.500 for a rule-based baseline — meaning 19 out of every 20 top-flagged pages are genuinely declining. The output is a ranked action playbook with three tiers: REFRESH_NOW, REVIEW_SOON, and MONITOR. All findings are observational and directional; we make no causal claims about refresh impact on ranking.</p>
+</div>
+
+<!-- SECTION 1: INTRODUCTION -->
+<div class="section" id="introduction">
+  <div class="section-num">Section 01</div>
+  <h2>Introduction & Problem Statement</h2>
+  <p>A content editor at a large website cannot refresh every page every week. With thousands of pages in a portfolio, the decision of where to focus editorial effort is typically driven by intuition, staleness dates, or simple rules like "refresh pages older than 6 months." These approaches ignore the most relevant signal: actual search performance.</p>
+  <p>This work builds a scoring model that ranks pages by refresh priority using observable search signals — impressions, CTR, position, and trend direction. The output supports a concrete decision: which pages to put in the content editor's queue this week.</p>
+  <div class="card">
+    <h4>The Decision This Work Supports</h4>
+    <p>A content editor opens the top-ranked pages from this model's output and schedules them for a content update. Pages ranked lower stay in the backlog. The cost of a wrong recommendation is wasted editor time — spending a week refreshing a page that did not need it, while the pages that actually needed attention keep declining.</p>
+  </div>
+</div>
+
+<!-- SECTION 2: DATA -->
+<div class="section" id="data">
+  <div class="section-num">Section 02</div>
+  <h2>Data</h2>
+  <p>Dataset: FlyRank ML Internship Starter Release — content_refresh_anonymized.csv</p>
+  <table>
+    <tr><th>Property</th><th>Value</th></tr>
+    <tr><td>Total pages</td><td class="highlight">30,000</td></tr>
+    <tr><td>Features available</td><td>44 columns</td></tr>
+    <tr><td>Lookback window</td><td>90 days</td></tr>
+    <tr><td>Declining pages</td><td class="highlight">54.5% of dataset</td></tr>
+    <tr><td>Train / Test split</td><td>80% / 20% (24,000 / 6,000 pages)</td></tr>
+  </table>
+  <p><strong style="color:var(--white)">Excluded:</strong> Client names, domains, URLs — never used. Raw exports — never included. Future-window columns not used in features to prevent leakage.</p>
+</div>
+
+<!-- SECTION 3: METHODOLOGY -->
+<div class="section" id="methodology">
+  <div class="section-num">Section 03</div>
+  <h2>Methodology</h2>
+
+  <div class="card">
+    <h4>Label Definition</h4>
+    <p>trend_direction == 'down' → positive class (page is declining in impressions). This is a proxy label — we observe performance decline as a signal for refresh need. We cannot directly observe "needs refresh."</p>
+  </div>
+
+  <div class="card">
+    <h4>Features Used</h4>
+    <p>impressions_90d, ctr, avg_position, content_age_days, clicks_90d, sessions_90d, scroll_rate, engagement_rate. All are 90-day lookback signals — no future window used.</p>
+  </div>
+
+  <div class="card">
+    <h4>Baseline Rule</h4>
+    <p>Score = impressions_90d × (1 − ctr). Higher score = higher refresh priority. Simple, interpretable, no training required.</p>
+  </div>
+
+  <div class="card">
+    <h4>Model</h4>
+    <p>Random Forest Classifier — 100 trees, max depth 5. Chosen for interpretability via feature importance and robustness on tabular data.</p>
+  </div>
+
+  <div class="card">
+    <h4>Leakage Check</h4>
+    <p>trend_direction used only as label, never as a feature. No product flags or future-window columns included. Score formula verified: uses only historical lookback signals.</p>
+  </div>
+</div>
+
+<!-- SECTION 4: RESULTS -->
+<div class="section" id="results">
+  <div class="section-num">Section 04</div>
+  <h2>Results vs Baseline</h2>
+
+  <div class="metric-grid">
+    <div class="metric-card">
+      <div class="metric-num">0.950</div>
+      <div class="metric-label">Precision@20 (RF)</div>
+      <div class="metric-delta">+0.450 vs baseline</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-num">0.743</div>
+      <div class="metric-label">F1 Score (RF)</div>
+      <div class="metric-delta">+0.038 vs baseline</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-num">0.650</div>
+      <div class="metric-label">Precision (RF)</div>
+      <div class="metric-delta">+0.105 vs baseline</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-num">0.868</div>
+      <div class="metric-label">Recall (RF)</div>
+      <div class="metric-delta">vs 1.000 baseline</div>
+    </div>
+  </div>
+
+  <table>
+    <tr><th>Metric</th><th>Baseline Rule</th><th>Random Forest</th><th>Delta</th></tr>
+    <tr><td>Precision</td><td>0.545</td><td class="highlight">0.650</td><td>+0.105</td></tr>
+    <tr><td>Recall</td><td>1.000</td><td>0.868</td><td>-0.132</td></tr>
+    <tr><td>F1 Score</td><td>0.705</td><td class="highlight">0.743</td><td>+0.038</td></tr>
+    <tr><td>Precision@20</td><td>0.500</td><td class="highlight">0.950</td><td>+0.450</td></tr>
+  </table>
+
+  <p>The most important metric is Precision@20 — the fraction of top-20 flagged pages that are genuinely declining. The Random Forest scores 0.950 vs 0.500 for the baseline rule. In practice: out of every 20 pages an editor reviews from the model's top list, 19 actually need attention. The baseline sends editors to 10 genuinely declining pages and 10 false alarms.</p>
+</div>
+
+<!-- SECTION 5: LIMITATIONS -->
+<div class="section" id="limitations">
+  <div class="section-num">Section 05</div>
+  <h2>Limitations & Honest Framing</h2>
+  <ul class="limitation-list">
+    <li>Cannot claim causation — refreshing a page may not improve its ranking. This model identifies correlation, not cause.</li>
+    <li>trend_direction is a proxy label — it measures impression change, not content quality. A page can decline for reasons unrelated to content.</li>
+    <li>Zero-impression pages excluded — pages with no search visibility are a different problem not addressed here.</li>
+    <li>Single ecosystem — dataset covers one client portfolio. Patterns may not generalise to all website types or industries.</li>
+    <li>Algorithm changes — external ranking changes can cause decline signals unrelated to content quality.</li>
+  </ul>
+  <p>All findings are <strong style="color:var(--white)">observational and directional</strong>. This model supports a decision — it does not replace editorial judgment.</p>
+</div>
+
+<!-- SECTION 6: RECOMMENDATIONS -->
+<div class="section" id="recommendations">
+  <div class="section-num">Section 06</div>
+  <h2>Ranked Recommendations — Action Playbook</h2>
+  <p>Pages are scored by refresh probability and assigned to one of three action tiers:</p>
+
+  <div class="playbook-row" style="border-bottom:2px solid var(--border);padding-bottom:12px;margin-bottom:8px;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:.1em;">ACTION TIER</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:.1em;">THRESHOLD</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:.1em;">WHAT TO DO</div>
+  </div>
+
+  <div class="playbook-row">
+    <div><span class="action-badge refresh-now">REFRESH_NOW</span></div>
+    <div style="font-size:14px;color:var(--muted);">Probability ≥ 0.80</div>
+    <div style="font-size:14px;color:var(--muted);">Schedule for immediate content update. High confidence declining pages with strong signals.</div>
+  </div>
+
+  <div class="playbook-row">
+    <div><span class="action-badge review-soon">REVIEW_SOON</span></div>
+    <div style="font-size:14px;color:var(--muted);">Probability 0.60–0.79</div>
+    <div style="font-size:14px;color:var(--muted);">Flag for editor review this month. Likely declining but worth a manual check before committing to refresh.</div>
+  </div>
+
+  <div class="playbook-row">
+    <div><span class="action-badge monitor">MONITOR</span></div>
+    <div style="font-size:14px;color:var(--muted);">Probability &lt; 0.60</div>
+    <div style="font-size:14px;color:var(--muted);">Keep in backlog. Check next quarter. Low refresh priority based on current signals.</div>
+  </div>
+</div>
+
+<!-- SECTION 7: REPRODUCIBILITY -->
+<div class="section" id="reproducibility">
+  <div class="section-num">Section 07</div>
+  <h2>Reproducibility</h2>
+  <div class="card">
+    <h4>Repository</h4>
+    <p><a href="https://github.com/eeshamajid8-star/flyrank-ml-eesha" style="color:var(--accent);">github.com/eeshamajid8-star/flyrank-ml-eesha</a></p>
+  </div>
+  <div class="card">
+    <h4>Notebooks</h4>
+    <p>work/notebooks/capstone.ipynb — full pipeline: data load, features, baseline, model, results, charts</p>
+    <p>work/notebooks/w01_research_question.ipynb — research question and lane selection</p>
+    <p>work/notebooks/w02_ml_task_framing.ipynb — ML task framing</p>
+    <p>work/notebooks/w03_data_contract.ipynb — data contract and leakage checks</p>
+    <p>work/notebooks/w04_baseline_score.ipynb — baseline action score</p>
+  </div>
+  <div class="card">
+    <h4>Data</h4>
+    <p>FlyRank ML Internship Starter Dataset — content_refresh_anonymized.csv (30,000 pages, anonymized)</p>
+  </div>
+</div>
+
+<!-- FOOTER / ACKNOWLEDGMENTS -->
+<footer>
+  <p>Built on the <a href="https://flyrank.ai">FlyRank ML Internship dataset</a> — anonymized search intelligence data for education and research.</p>
+  <p style="margin-top:12px;">Eesha Majid · FlyRank AI Internship · Machine Learning Track · 2026</p>
+  <p style="margin-top:12px;"><a href="https://github.com/eeshamajid8-star/flyrank-ml-eesha">GitHub Repo</a> &nbsp;·&nbsp; <a href="https://eeshamajid8-star.github.io/eesha-portfolio">Portfolio</a> &nbsp;·&nbsp; eeshamajid8@gmail.com</p>
+</footer>
+
+</body>
+</html>
